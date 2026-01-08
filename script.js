@@ -389,6 +389,49 @@
     });
   }
 
+  function launchConfetti() {
+    // Create confetti pieces
+    const colors = ['#2e7cff', '#f0b429', '#e74c3c', '#2ecc71', '#9b59b6'];
+    const confettiCount = 150;
+    
+    for (let i = 0; i < confettiCount; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti-piece';
+      
+      // Random properties
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const size = Math.random() * 8 + 4;
+      const left = Math.random() * 100;
+      
+      confetti.style.width = `${size}px`;
+      confetti.style.height = `${size * 1.4}px`;
+      confetti.style.left = `${left}%`;
+      confetti.style.backgroundColor = color;
+      confetti.style.opacity = Math.random() * 0.5 + 0.5;
+      
+      // Random animation duration
+      const duration = Math.random() * 3 + 2;
+      confetti.style.animationDuration = `${duration}s`;
+      
+      document.body.appendChild(confetti);
+      
+      // Remove confetti after animation completes
+      setTimeout(() => {
+        confetti.remove();
+      }, duration * 1000);
+    }
+  }
+
+  function restorePage() {
+    if (window.__originalPageHTML) {
+      const main = document.querySelector('main.page');
+      if (main) {
+        main.innerHTML = window.__originalPageHTML;
+        initPage();
+      }
+    }
+  }
+
   // Render a full page success screen similar to the provided mock
   function showSuccessScreen(submissionData) {
     const main = document.querySelector('main.page');
@@ -507,12 +550,17 @@ form.addEventListener("submit", function (e) {
     body: formData,
   })
     .then((res) => {
-      if (!res.ok) throw new Error("Network error");
-      alert("🎉 Registration successful!");
-      form.reset();
+      if (!res.ok) throw new Error(`Network error: ${res.status}`);
+      return res.text(); // Google Apps Script typically returns text
+    })
+    .then((data) => {
+      console.log('Success:', data);
+      // Show success screen instead of just an alert
+      const formDataObj = Object.fromEntries(new FormData(form));
+      showSuccessScreen(formDataObj);
     })
     .catch((err) => {
-      console.error(err);
+      console.error('Error:', err);
       alert("❌ Something went wrong. Please try again.");
     })
     .finally(() => {
@@ -529,3 +577,12 @@ form.addEventListener("submit", function (e) {
 form.addEventListener("input", () => {
   submitBtn.disabled = !form.checkValidity();
 });
+
+function initPage() {
+  bindGuestLogic();
+  // Initialize custom selects
+  new CustomSelect(document.getElementById('tshirt-size-select'));
+  new CustomSelect(document.getElementById('payment-method-select'));
+}
+
+})(); // Close the IIFE
